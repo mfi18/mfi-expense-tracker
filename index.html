@@ -4,39 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Expense Tracker - MFI</title>
-    
+
     <!-- PDF Engines -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root {
-            --ios-blue: #007AFF;
+            --ios-blue: #0A84FF;
             --ios-green: #30D158;
             --ios-red: #FF453A;
-            --glass-bg: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-blur: blur(40px) saturate(210%);
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-bg-strong: rgba(255, 255, 255, 0.14);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --glass-highlight: rgba(255, 255, 255, 0.55);
+            --glass-blur: blur(30px) saturate(180%);
             --text-main: #ffffff;
             --text-dim: rgba(255, 255, 255, 0.5);
-            --ios-spring: cubic-bezier(0.32, 2.1, 0.35, 0.85);
+            --ios-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ios-ease: cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; 
-            letter-spacing: -0.015em; 
-            user-select: none; 
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            letter-spacing: -0.015em;
+            user-select: none;
         }
-        
+
+        html, body {
+            height: 100%;
+        }
+
         body {
             background-color: #000;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(225,39%,22%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 100%, hsla(339,49%,18%,1) 0, transparent 50%);
+            background-image:
+                radial-gradient(at 15% 0%, hsla(253,45%,16%,1) 0, transparent 55%),
+                radial-gradient(at 100% 10%, hsla(225,55%,24%,1) 0, transparent 50%),
+                radial-gradient(at 50% 100%, hsla(339,55%,20%,1) 0, transparent 55%),
+                radial-gradient(at 0% 100%, hsla(190,55%,16%,1) 0, transparent 50%);
             background-attachment: fixed;
+            background-size: 200% 200%;
+            animation: ambientDrift 30s ease-in-out infinite;
             color: var(--text-main);
             margin: 0;
             height: 100vh;
@@ -45,116 +55,242 @@
             overflow: hidden;
         }
 
-        #app-container { 
-            width: 100%; 
-            max-width: 440px; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            position: relative; 
-            height: 100vh;
+        @keyframes ambientDrift {
+            0%   { background-position: 0% 0%; }
+            50%  { background-position: 100% 60%; }
+            100% { background-position: 0% 0%; }
         }
 
-        /* --- GLASS SYSTEM --- */
-        .glass-card { 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur); 
-            -webkit-backdrop-filter: var(--glass-blur); 
-            border: 0.5px solid var(--glass-border); 
-            border-radius: 32px; 
-            padding: 25px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
+        /* Faint moving specular sheen across the whole screen, like liquid glass catching light */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: -20% -20%;
+            background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 55%, transparent 70%);
+            background-size: 300% 300%;
+            animation: sheenSweep 12s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        /* --- HAPTIC BUTTONS --- */
-        .pill-btn { 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur); 
-            -webkit-backdrop-filter: var(--glass-blur); 
-            border: 0.5px solid var(--glass-border); 
-            border-radius: 22px; 
-            padding: 18px; 
-            color: white; 
-            font-weight: 600; 
-            font-size: 17px; 
-            cursor: pointer; 
-            transition: transform 0.3s var(--ios-spring), box-shadow 0.3s ease, background 0.3s ease;
-            width: 100%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 12px; 
-            margin-bottom: 14px;
+        @keyframes sheenSweep {
+            0%   { background-position: 0% 0%; }
+            50%  { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
             position: relative;
+            height: 100vh;
+            min-height: 0;
+            z-index: 1;
         }
 
-        .pill-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.15); }
+        /* --- LIQUID GLASS SYSTEM --- */
+        .glass-card, .pill-btn {
+            position: relative;
+            isolation: isolate;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%),
+                var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 0.5px solid var(--glass-border);
+            box-shadow:
+                inset 0 1px 1px rgba(255,255,255,0.35),
+                inset 0 -1px 8px rgba(255,255,255,0.03),
+                0 12px 30px rgba(0,0,0,0.35);
+        }
+
+        /* thin top-edge specular highlight, the signature "liquid glass" rim */
+        .glass-card::before, .pill-btn::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 8%; right: 8%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+            opacity: 0.5;
+            border-radius: 100%;
+        }
+
+        .glass-card {
+            border-radius: 32px;
+            padding: 25px;
+            margin-bottom: 20px;
+            animation: cardRise 0.6s var(--ios-ease) both;
+        }
+
+        @keyframes cardRise {
+            from { opacity: 0; transform: translateY(14px) scale(0.98); filter: blur(6px); }
+            to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        /* --- HAPTIC / LIQUID BUTTONS --- */
+        .pill-btn {
+            border-radius: 22px;
+            padding: 18px;
+            color: white;
+            font-weight: 600;
+            font-size: 17px;
+            cursor: pointer;
+            transition: transform 0.45s var(--ios-spring), box-shadow 0.35s var(--ios-ease), background 0.35s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+
+        .pill-btn:active {
+            transform: scale(0.94);
+            background: rgba(255,255,255,0.16);
+        }
+
         .pill-btn.haptic-pop {
-            transform: scale(1.08);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
-            background: rgba(255,255,255,0.22);
+            transform: scale(1.06);
+            box-shadow:
+                inset 0 1px 1px rgba(255,255,255,0.4),
+                0 0 34px rgba(255, 255, 255, 0.18),
+                0 12px 30px rgba(0,0,0,0.35);
+            background: rgba(255,255,255,0.20);
             z-index: 10;
         }
 
-        .btn-add { background: rgba(48, 209, 88, 0.2); border-color: rgba(48, 209, 88, 0.4); color: var(--ios-green); }
-        .btn-remove { background: rgba(255, 69, 58, 0.2); border-color: rgba(255, 69, 58, 0.4); color: var(--ios-red); }
-        .btn-blue { background: var(--ios-blue); border: none; font-weight: 700; }
-        .btn-back { width: auto; padding: 10px 20px; border-radius: 14px; font-size: 13px; align-self: flex-start; margin-bottom: 20px; background: rgba(255,255,255,0.1); }
+        /* liquid ripple that blooms from touch point */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 60%, transparent 70%);
+            animation: rippleOut 0.7s var(--ios-ease) forwards;
+            pointer-events: none;
+        }
+
+        @keyframes rippleOut {
+            to { transform: scale(3.2); opacity: 0; }
+        }
+
+        .btn-add { background: rgba(48, 209, 88, 0.16); border-color: rgba(48, 209, 88, 0.4); color: var(--ios-green); }
+        .btn-remove { background: rgba(255, 69, 58, 0.16); border-color: rgba(255, 69, 58, 0.4); color: var(--ios-red); }
+        .btn-blue { background: linear-gradient(180deg, #3a9bff, var(--ios-blue)); border: none; font-weight: 700; }
+        .btn-back { width: auto; padding: 10px 20px; border-radius: 14px; font-size: 13px; align-self: flex-start; margin-bottom: 20px; background: rgba(255,255,255,0.08); }
 
         /* --- TYPOGRAPHY --- */
-        .wallet-amt { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin: 8px 0; }
+        .wallet-amt { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin: 8px 0; transition: color 0.4s ease; }
         .month-label { color: var(--text-dim); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
 
-        input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px; color: white; font-size: 20px; outline: none; margin-top: 10px; text-align: center; }
+        input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 18px;
+            color: white;
+            font-size: 20px;
+            outline: none;
+            margin-top: 10px;
+            text-align: center;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+
+        input:focus {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.18);
+        }
 
         /* --- FOOTER ATTRIBUTION --- */
         .footer-attribution {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    text-align: center;
-    padding: 12px;
-    font-size: 10px;
-    color: var(--text-dim);
-    background: rgba(0, 0, 0, 0.4); /* Darker glass to stay readable */
-    backdrop-filter: blur(15px);
-    border-radius: 18px;
-    border: 0.5px solid var(--glass-border);
-    z-index: 100;
-    pointer-events: none; /* Allows you to click buttons even if they are "behind" the footer */
-}
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            padding: 12px;
+            font-size: 10px;
+            color: var(--text-dim);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            border-radius: 18px;
+            border: 0.5px solid var(--glass-border);
+            z-index: 100;
+            pointer-events: none;
+        }
         .footer-attribution strong { color: white; letter-spacing: 1px; }
 
-        /* --- VIEW TRANSITIONS --- */
-        .view { 
-    display: none; 
-    flex-direction: column; 
-    flex: 1; 
-    overflow-y: auto; /* Allows scrolling */
-    padding-bottom: 100px; /* Prevents content from being hidden behind your name footer */
-    -webkit-overflow-scrolling: touch; /* Smooth iPhone scrolling */
-    scrollbar-width: none; /* Hides scrollbar on Firefox */
-}
-.view::-webkit-scrollbar { display: none; } /* Hides scrollbar on Chrome/Safari */
-        .view.active { display: flex; }
+        /* --- VIEW / SCROLL SYSTEM (fixed) --- */
+        #app-header { flex: 0 0 auto; }
 
-        @keyframes iosOpen { from { opacity: 0; transform: scale(0.9) translateY(30px); filter: blur(15px); } to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
+        .view-stack {
+            flex: 1 1 auto;
+            min-height: 0;
+            position: relative;
+        }
 
-        #history-list { flex: 1; overflow-y: auto; padding-bottom: 20px; }
-        .history-item { background: var(--glass-bg); border: 0.5px solid var(--glass-border); border-radius: 24px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            overflow-y: auto;
+            padding-bottom: 100px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .view::-webkit-scrollbar { display: none; }
+        .view.active {
+            display: flex;
+            animation: viewIn 0.45s var(--ios-ease) both;
+        }
+
+        @keyframes viewIn {
+            from { opacity: 0; transform: scale(0.96) translateY(10px); filter: blur(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+        }
+
+        #history-list { display: flex; flex-direction: column; }
+        .history-item {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            animation: cardRise 0.5s var(--ios-ease) both;
+        }
 
         .row { display: flex; gap: 15px; }
         .half { flex: 1; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            body { animation: none; }
+        }
     </style>
 </head>
 <body>
 
 <div id="app-container">
-    
+
     <!-- BRANDING -->
-    <div style="text-align: center; margin-top: 10px;">
+    <div style="text-align: center; margin-top: 10px; flex: 0 0 auto;">
         <img src="favicon-96x96.png" style="width: 55px; filter: drop-shadow(0 0 15px rgba(0, 122, 255, 0.5));">
         <div style="font-size: 12px; font-weight: 700; margin-top: 5px; color: var(--ios-blue); letter-spacing: 2px;">MFI Expense Tracker</div>
     </div>
@@ -178,57 +314,59 @@
         </div>
     </div>
 
-    <!-- VIEW: DASHBOARD -->
-    <div id="view-dashboard" class="view active">
-        <div class="row">
-            <div class="half"><button class="pill-btn btn-add haptic" onclick="showView('incoming')">＋ ADD</button></div>
-            <div class="half"><button class="pill-btn btn-remove haptic" onclick="showView('outgoing')">－ REMOVE</button></div>
+    <div class="view-stack">
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="view active">
+            <div class="row">
+                <div class="half"><button class="pill-btn btn-add haptic" onclick="showView('incoming')">＋ ADD</button></div>
+                <div class="half"><button class="pill-btn btn-remove haptic" onclick="showView('outgoing')">－ REMOVE</button></div>
+            </div>
+            <button class="pill-btn haptic" onclick="showView('history')">📜 History &amp; Backup</button>
         </div>
-        <button class="pill-btn haptic" onclick="showView('history')">📜 History & Backup</button>
-    </div>
 
-    <!-- VIEW: INCOME MENU -->
-    <div id="view-incoming" class="view">
-        <button class="pill-btn btn-back" onclick="showView('dashboard')">← Dashboard</button>
-        <button class="pill-btn haptic" onclick="prepEntry('Income', 'Pocketmoney')">💰 Pocketmoney</button>
-        <button class="pill-btn haptic" onclick="prepEntry('Income', 'Debt Back')">🔄 Debt Back</button>
-        <button class="pill-btn haptic" onclick="prepEntry('Income', 'Other')">✨ Other</button>
-    </div>
-
-    <!-- VIEW: EXPENSE MENU -->
-    <div id="view-outgoing" class="view">
-        <button class="pill-btn btn-back" onclick="showView('dashboard')">← Dashboard</button>
-        <button class="pill-btn haptic" onclick="showView('food')">🍔 Food & Drinks</button>
-        <button class="pill-btn haptic" onclick="prepEntry('Expense', 'Cab')">🚕 Cab</button>
-        <button class="pill-btn haptic" onclick="prepEntry('Expense', 'Rent')">🏠 Rent</button>
-        <button class="pill-btn haptic" onclick="prepEntry('Expense', 'Other')">🛒 Other</button>
-    </div>
-
-    <!-- VIEW: FOOD MENU -->
-    <div id="view-food" class="view">
-        <button class="pill-btn btn-back" onclick="showView('outgoing')">← Back</button>
-        <div id="food-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
-    </div>
-
-    <!-- VIEW: ENTRY FORM -->
-    <div id="view-entry" class="view">
-        <button class="pill-btn btn-back" onclick="showView('dashboard')">✕ Cancel</button>
-        <div class="glass-card">
-            <h2 id="entry-title" style="margin: 0; text-align: center;">Entry</h2>
-            <input type="number" id="input-amount" placeholder="0.00" inputmode="decimal">
-            <input type="text" id="input-desc" placeholder="Remarks (Optional)">
-            <button class="pill-btn btn-blue haptic" style="margin-top: 25px;" onclick="saveEntry()">Save Transaction</button>
+        <!-- VIEW: INCOME MENU -->
+        <div id="view-incoming" class="view">
+            <button class="pill-btn btn-back haptic" onclick="showView('dashboard')">← Dashboard</button>
+            <button class="pill-btn haptic" onclick="prepEntry('Income', 'Pocketmoney')">💰 Pocketmoney</button>
+            <button class="pill-btn haptic" onclick="prepEntry('Income', 'Debt Back')">🔄 Debt Back</button>
+            <button class="pill-btn haptic" onclick="prepEntry('Income', 'Other')">✨ Other</button>
         </div>
-    </div>
 
-    <!-- VIEW: HISTORY -->
-    <div id="view-history" class="view">
-        <button class="pill-btn btn-back" onclick="showView('dashboard')">← Back</button>
-        <div class="glass-card" style="padding: 15px; margin-bottom: 15px; display: flex; gap: 10px;">
-            <button class="pill-btn haptic" style="font-size: 11px; padding: 10px; margin:0;" onclick="exportPreviousMonth()">PDF Report</button>
-            <button class="pill-btn haptic" style="font-size: 11px; padding: 10px; margin:0;" onclick="backupJSON()">💾 Backup</button>
+        <!-- VIEW: EXPENSE MENU -->
+        <div id="view-outgoing" class="view">
+            <button class="pill-btn btn-back haptic" onclick="showView('dashboard')">← Dashboard</button>
+            <button class="pill-btn haptic" onclick="showView('food')">🍔 Food &amp; Drinks</button>
+            <button class="pill-btn haptic" onclick="prepEntry('Expense', 'Cab')">🚕 Cab</button>
+            <button class="pill-btn haptic" onclick="prepEntry('Expense', 'Rent')">🏠 Rent</button>
+            <button class="pill-btn haptic" onclick="prepEntry('Expense', 'Other')">🛒 Other</button>
         </div>
-        <div id="history-list"></div>
+
+        <!-- VIEW: FOOD MENU -->
+        <div id="view-food" class="view">
+            <button class="pill-btn btn-back haptic" onclick="showView('outgoing')">← Back</button>
+            <div id="food-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+        </div>
+
+        <!-- VIEW: ENTRY FORM -->
+        <div id="view-entry" class="view">
+            <button class="pill-btn btn-back haptic" onclick="showView('dashboard')">✕ Cancel</button>
+            <div class="glass-card">
+                <h2 id="entry-title" style="margin: 0; text-align: center;">Entry</h2>
+                <input type="number" id="input-amount" placeholder="0.00" inputmode="decimal">
+                <input type="text" id="input-desc" placeholder="Remarks (Optional)">
+                <button class="pill-btn btn-blue haptic" style="margin-top: 25px;" onclick="saveEntry()">Save Transaction</button>
+            </div>
+        </div>
+
+        <!-- VIEW: HISTORY -->
+        <div id="view-history" class="view">
+            <button class="pill-btn btn-back haptic" onclick="showView('dashboard')">← Back</button>
+            <div class="glass-card" style="padding: 15px; margin-bottom: 15px; display: flex; gap: 10px;">
+                <button class="pill-btn haptic" style="font-size: 11px; padding: 10px; margin:0;" onclick="exportPreviousMonth()">PDF Report</button>
+                <button class="pill-btn haptic" style="font-size: 11px; padding: 10px; margin:0;" onclick="backupJSON()">💾 Backup</button>
+            </div>
+            <div id="history-list"></div>
+        </div>
     </div>
 
     <!-- FOOTER NAME -->
@@ -243,21 +381,45 @@
     let transactions = JSON.parse(localStorage.getItem('mfi_final_logs')) || [];
     let activeCat = "", activeSub = "", activeType = "";
 
-    // --- HAPTIC TOUCH SYSTEM ---
+    // --- HAPTIC + LIQUID RIPPLE TOUCH SYSTEM ---
     function applyHaptics() {
         const hapticBtns = document.querySelectorAll('.haptic');
         hapticBtns.forEach(btn => {
+            if (btn.dataset.hapticBound) return;
+            btn.dataset.hapticBound = "1";
             let timer;
-            btn.ontouchstart = () => {
+
+            const spawnRipple = (x, y) => {
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height) * 1.2;
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = (x - rect.left - size / 2) + 'px';
+                ripple.style.top = (y - rect.top - size / 2) + 'px';
+                btn.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 700);
+            };
+
+            btn.addEventListener('pointerdown', (e) => {
+                spawnRipple(e.clientX, e.clientY);
                 timer = setTimeout(() => {
                     btn.classList.add('haptic-pop');
                     if (navigator.vibrate) navigator.vibrate(18);
-                }, 400);
-            };
-            btn.ontouchend = btn.ontouchcancel = () => {
+                }, 350);
+            });
+            btn.addEventListener('pointerup', () => {
                 clearTimeout(timer);
                 btn.classList.remove('haptic-pop');
-            };
+            });
+            btn.addEventListener('pointercancel', () => {
+                clearTimeout(timer);
+                btn.classList.remove('haptic-pop');
+            });
+            btn.addEventListener('pointerleave', () => {
+                clearTimeout(timer);
+                btn.classList.remove('haptic-pop');
+            });
         });
     }
 
@@ -265,19 +427,33 @@
         const now = new Date();
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         document.getElementById('display-month').innerText = monthNames[now.getMonth()] + " " + now.getFullYear();
-        
+
         const foods = ["Biryani", "Burger", "Shake", "Chaat", "Pizza", "Tea", "Drink", "Others"];
         document.getElementById('food-grid').innerHTML = foods.map(f => `<button class="pill-btn haptic" onclick="prepEntry('Expense', '${f}')">${f}</button>`).join('');
-        
+
         refreshData();
         applyHaptics();
+    }
+
+    // Smoothly animate the wallet number when balance changes
+    function animateNumber(el, from, to, prefix) {
+        const duration = 500;
+        const start = performance.now();
+        function tick(now) {
+            const p = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - p, 3);
+            const val = from + (to - from) * eased;
+            el.innerText = prefix + Math.round(val).toLocaleString();
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
     }
 
     function refreshData() {
         const now = new Date();
         const currentKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
         let mIn = 0, mEx = 0;
-        
+
         transactions.forEach(t => {
             if (t.monthYear === currentKey) {
                 if (t.type === 'Income') mIn += parseFloat(t.amount);
@@ -287,14 +463,16 @@
 
         const bal = mIn - mEx;
         const wallet = document.getElementById('display-wallet');
-        wallet.innerText = "PKR " + bal.toLocaleString();
+        const prevBal = parseFloat((wallet.dataset.bal || "0"));
+        animateNumber(wallet, prevBal, bal, "PKR ");
+        wallet.dataset.bal = bal;
         wallet.style.color = bal >= 0 ? "var(--ios-green)" : "var(--ios-red)";
         document.getElementById('stat-inc').innerText = "+" + mIn.toLocaleString();
         document.getElementById('stat-exp').innerText = "-" + mEx.toLocaleString();
 
         const sorted = [...transactions].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        document.getElementById('history-list').innerHTML = sorted.map(t => `
-            <div class="history-item">
+        document.getElementById('history-list').innerHTML = sorted.map((t, i) => `
+            <div class="history-item" style="animation-delay:${Math.min(i, 8) * 0.04}s">
                 <div><div style="font-weight:700;">${t.subCat}</div><div style="font-size:10px; color:var(--text-dim);">${t.date}</div></div>
                 <div style="text-align:right;"><div style="font-weight:800; color:${t.type==='Income'?'var(--ios-green)':'var(--ios-red)'}">${t.type==='Income'?'+':'-'}${parseFloat(t.amount).toLocaleString()}</div><div style="font-size:10px; color:var(--text-dim);">${t.detail||''}</div></div>
             </div>
@@ -304,13 +482,13 @@
     }
 
     function showView(id) {
-    document.querySelectorAll('.view').forEach(v => {
-        v.classList.remove('active');
-        v.scrollTop = 0; // <--- ADD THIS LINE
-    });
-    document.getElementById('view-' + id).classList.add('active');
-    applyHaptics();
-}
+        document.querySelectorAll('.view').forEach(v => {
+            v.classList.remove('active');
+            v.scrollTop = 0;
+        });
+        document.getElementById('view-' + id).classList.add('active');
+        applyHaptics();
+    }
 
     function prepEntry(cat, sub) {
         activeCat = cat; activeSub = sub; activeType = cat;
@@ -318,6 +496,7 @@
         document.getElementById('input-amount').value = "";
         document.getElementById('input-desc').value = "";
         showView('entry');
+        setTimeout(() => document.getElementById('input-amount').focus(), 350);
     }
 
     function saveEntry() {
@@ -363,6 +542,3 @@
 </script>
 </body>
 </html>
-
-
-
