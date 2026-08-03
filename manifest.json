@@ -1,0 +1,28 @@
+{
+  "name": "MFI Expense Tracker",
+  "short_name": "MFI Tracker",
+  "description": "Personal income & expense tracker",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-96x96.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-96x96.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
